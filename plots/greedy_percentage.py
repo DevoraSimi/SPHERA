@@ -25,14 +25,13 @@ def run_experiment(ks, num_runs, p=None, mode="gnp"):
     :param mode: Mode specifying graph type ("gnp", "colored", "non-colored"). Default is "gnp".
     """
     # Define the three gate options
-    gate_options = ["greedy", "sphera", "no_gate", "bk"]
+    gate_options = ["cbk", "heuristic", "greedy", "sphera", "no_gate", "bk"]
     for option in gate_options:
         for k in ks:
             print(k)
             times = []
             clique_sizes = []
-
-            for _ in range(num_runs):
+            for i in range(num_runs):
                 if mode == "gnp":
                     # Generate a G(n, p) graph
                     process_graph.generate_gnp(k, p, 100 if p == 0.5 else 1000)
@@ -70,6 +69,11 @@ def run_experiment(ks, num_runs, p=None, mode="gnp"):
                                                                       label_to_node, [], list(graph.nodes()),
                                                                       [], [])
                     clique_size = len(found_cliques[-1])
+                elif option == "cbk":
+                    found_cliques = find_rainbow_clique.colored_bron_kerbosch(graph.copy(), label_to_node.keys(), node_to_label,
+                                                                      label_to_node, [], list(graph.nodes()),
+                                                                      [], [])
+                    clique_size = len(found_cliques[-1])
                 elif option == "no_gate":
                     clique_founded, _ = find_rainbow_clique.rc_detection(graph, node_to_label, label_to_node, heuristic=False,
                                                                    greedy=False, gate_change=False)
@@ -86,9 +90,9 @@ def run_experiment(ks, num_runs, p=None, mode="gnp"):
 
             # Save results to a separate file for each (p, k, option) combination
             if mode == "gnp":
-                filename = f"results_p={p}_k={k}_{option}.txt"
+                filename = f"results_p={p}_k={k}_{option}_fixed.txt"
             else:
-                filename = f"../results_real_graphs/results_k={k}_{option}_fixed.txt"
+                filename = f"../results_real_graphs_new/results_k={k}_{option}_fixed.txt"
             with open(filename, 'w') as f:
                 for t, s in zip(times, clique_sizes):
                     f.write(f"{t},{s}\n")
@@ -110,7 +114,10 @@ def plot_gnp_results(axs):
         num_graphs = 20
         for method in methods:
             # Get all files for the current p and method
-            files = glob.glob(f"results_p={p}_k=*_{method}.txt")
+            if method == "heuristic" or method == "sphera":
+                files = glob.glob(f"results_p={p}_k=*_{method}_fixed.txt")
+            else:
+                files = glob.glob(f"results_p={p}_k=*_{method}.txt")
 
             for file in files:
                 # Extract k from the filename
@@ -166,12 +173,12 @@ def run_options_for_plots():
     """
     Runs experiments for both G(n,p) and real-world graphs and saves the results to files.
     """
-    p_values = [0.3]
+    p_values = [0.1, 0.3, 0.5]
     for i, p in enumerate(p_values):
         if p == 0.1:
             ks = range(3, 21)
         elif p == 0.3:
-            ks = range(30, 31)
+            ks = range(3, 31)
         else:
             ks = range(3, 31)
         run_experiment(ks, 20, p)

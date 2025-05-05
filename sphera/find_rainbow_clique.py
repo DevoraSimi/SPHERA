@@ -279,7 +279,10 @@ def fixed_order_barrier(graph, node_to_label, label_to_node, labels_list, potent
                 cliques_founded = potential_clique
             elif len(node_list) == len(label_to_node) and is_clique(graph, node_list, label_to_node, node_to_label):
                 max_cliques_founded = list(node_list)
-                return max_cliques_founded, greedy_size, first, gate
+                s_max_cliques_founded = sorted(max_cliques_founded, key=lambda node: labels_list.index(node_to_label[node]))
+                with open(filename, 'a') as f:
+                    f.write(f"{s_max_cliques_founded}\n")
+                return s_max_cliques_founded, greedy_size, first, gate
             else:
                 # Recursive call to extend the clique further
                 new_remaining_nodes = [node for node in new_remaining_nodes if node in node_list]

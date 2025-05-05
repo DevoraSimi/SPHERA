@@ -37,7 +37,11 @@ def time_and_percentage_data():
         "Email-Enron.txt": 10,
         "large_twitch_edges.csv": 15,
         "musae_git_edges.csv": 15,
-        "oregon1_010428.txt": 4
+        "oregon1_010428.txt": 4,
+        "deezer_europe_edges.csv": 6,
+        "DHFR": 9,
+        "Mutagenicity": 14,
+        "NCI109": 38
     }
 
     # Define methods and files
@@ -66,6 +70,11 @@ def time_and_percentage_data():
             else:
                 print(f"File {filename} not found.")
     graph_names_short = [name.split('.')[0] for name in graph_names]
+    replacements = {"artist_edges": "gemsec_facebook", "large_twitch_edges": "twitch_gamers",
+                    "musae_git_edges": "musae-github", "oregon1_010428": "Oregon1", "deezer_europe_edges.csv":
+                        "feather-deezer-social"}
+    # Apply replacements
+    graph_names_short = [replacements.get(name, name) for name in graph_names_short]
     return all_cliques, all_times, graph_names_short
 
 
@@ -94,7 +103,9 @@ def subplot_boxplot(axes, method_data, graph_names_short, position):
         'Value': method_means
     })
 
-    colors = ['red', 'blue', 'green', 'purple', 'orange', 'brown', 'pink', 'teal', 'navy', 'gray', 'hotpink']
+    colors = ['red', 'blue', 'green', 'purple', 'orange', 'brown', 'pink', 'teal', 'navy', 'gray', 'hotpink', 'indigo',
+              'darkred', 'olive', 'slateblue'
+              ]
 
     # Add the dots for each individual run
     legend_font = FontProperties()
@@ -150,7 +161,7 @@ def plot_colors_vs_time(ax, graph_names, colors):
     for i, graph in enumerate(graph_names):
         short_name = graph_names_short[i]
         color = colors[i]
-        file_pattern = f"../new_fig/{graph}_color_*_colors.txt"
+        file_pattern = f"../new_fig2/{graph}_color_*_colors.txt"
         files = sorted(glob.glob(file_pattern))
 
         num_colors_list = []
@@ -179,9 +190,10 @@ if __name__ == '__main__':
     ax_top = fig.add_subplot(gs[0, 0])
     subplot_boxplot(ax_top, all_times, graph_names_short, "right")  # Pass ax directly
     # Bottom left subplot (scatter plot)
-    colors = ['brown', 'pink', 'teal', 'navy', 'gray', 'hotpink']
+    colors = ['brown', 'pink', 'teal', 'navy', 'gray', 'hotpink', 'indigo'
+              ]
     graph_names = ["artist_edges.csv", "CA-CondMat.txt", "Email-Enron.txt", "large_twitch_edges.csv",
-               "musae_git_edges.csv", "oregon1_010428.txt"]
+                   "musae_git_edges.csv", "oregon1_010428.txt", "deezer_europe_edges.csv"]
     ax_bottom = fig.add_subplot(gs[1, :])
     plot_colors_vs_time(ax_bottom, graph_names, colors)
     plt.tight_layout()

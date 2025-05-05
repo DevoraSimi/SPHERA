@@ -232,6 +232,19 @@ def data_for_plot_prob_next(num_runs, gate_or_heuristic, option="gate", p=0.3, n
                 bk_cliques = find_bk_cliques(graph, node_to_label)  # Find Bron-Kerbosch cliques
                 if len(bk_cliques) == 1:
                     i += 1
+                    if with_h:
+                        # If there is more than one clique, we handle the second-to-last clique
+                        if len(list_of_cliques) > 1:
+                            one_before = list_of_cliques[-2]  # The second-to-last clique
+                            Q = list_of_cliques[-1]
+                            list_of_cliques.remove(Q)
+                            to_add = [node for node in Q if node not in one_before]  # Nodes in Q but not in one_before
+                            # Add the new nodes from the difference to options_for_next
+                            new_clique = list(set(one_before) & set(Q))
+                            for node in to_add:
+                                new_clique.append(node)
+                                list_of_cliques.append(new_clique.copy())
+                            list_of_cliques.append(Q)
                     probs = calculate_probabilities_in_clique(list_of_cliques, with_h)
                     # Save probabilities for this k
                     if k in all_probs:
@@ -249,7 +262,7 @@ def data_for_plot_prob_next(num_runs, gate_or_heuristic, option="gate", p=0.3, n
 
     # Save all_probs to a pickle file
     if option == "gate":
-        with open(f'all_probs_{p}_h={with_h}_gate={gate_or_heuristic}_200_2.pkl', 'wb') as f:
+        with open(f'all_probs_{p}_h={with_h}_gate={gate_or_heuristic}.pkl', 'wb') as f:
             pickle.dump(all_probs, f)
     else:
         with open(f'../results_real_graphs/all_probs_h={with_h}_heuristic={gate_or_heuristic}.pkl', 'wb') as f:
@@ -257,6 +270,23 @@ def data_for_plot_prob_next(num_runs, gate_or_heuristic, option="gate", p=0.3, n
     # Calculate aggregated probabilities (mean/std) across all k values
     aggregated_probs = aggregate_probabilities(all_probs)
     return aggregated_probs
+
+
+def expand_dicts_in_structure(data):
+    updated_data = {}
+    for key, list_of_dicts in data.items():
+        new_list = []
+        for d in list_of_dicts:
+            new_d = d.copy()
+            keys = sorted(new_d.keys())
+            if len(keys) >= 2:
+                start, end = keys[0], keys[-1]
+                for i in range(start + 1, end):
+                    if i not in new_d:
+                        new_d[i] = 1.0
+            new_list.append(new_d)
+        updated_data[key] = new_list
+    return updated_data
 
 
 def plot_function_prob(p, t_min, t_max, axs, gate=True):
@@ -283,8 +313,13 @@ def plot_function_prob(p, t_min, t_max, axs, gate=True):
         return filtered_x, filtered_y, filtered_std
     # aggregated_probs = data_for_plot_prob_next(300, gate, "gate", p, num_k=3, first_k=9, with_h=False)
     # Uncomment the following line to load pre-saved probabilities from a pickle file
-    with open(f'all_probs_{p}_h=False_gate={gate}.pkl', 'rb') as f:
-        all_probs = pickle.load(f)
+    if gate:
+        with open(f'all_probs_{p}_h=False_gate={gate}_combined_300_new.pkl', 'rb') as f:
+            all_probs = pickle.load(f)
+            all_probs = expand_dicts_in_structure(all_probs)
+    else:
+        with open(f'all_probs_{p}_h=False_gate={gate}.pkl', 'rb') as f:
+            all_probs = pickle.load(f)
     # Calculate the probabilities (mean/std) across all k values
     aggregated_probs = aggregate_probabilities(all_probs)
     # Extract and plot data for k = 9, 10, 11
@@ -477,8 +512,12 @@ def plot_function_prob_with_h(p, t_min, t_max, h_min, h_max, axs, gate=True):
     # Generate data for the plot
     #data_dict = data_for_plot_prob_next(400, gate, "gate", p, num_k=3, first_k=first_k, with_h=True)
     # Uncomment the following line to load pre-saved probabilities from a pickle file
-    with open(f'all_probs_{p}_h=True_gate={gate}_combined_1400.pkl', 'rb') as f:
-        all_probs = pickle.load(f)
+    if gate:
+        with open(f'all_probs_{p}_h=True_gate={gate}_combined_1400_new.pkl', 'rb') as f:
+            all_probs = pickle.load(f)
+    else:
+        with open(f'all_probs_{p}_h=True_gate={gate}_combined_1400.pkl', 'rb') as f:
+            all_probs = pickle.load(f)
     data_dict = aggregate_probabilities(all_probs)  # Aggregate probabilities if using the pickle file
     print(data_dict)
 
@@ -501,9 +540,9 @@ def plot_function_prob_with_h(p, t_min, t_max, h_min, h_max, axs, gate=True):
 
 
 def combine_data(with_gate):
-    with open(f'all_probs_0.3_h=True_gate={with_gate}_combined_1200.pkl', 'rb') as f:
+    with open(f'all_probs_0.3_h=True_gate={with_gate}_newnew_all.pkl', 'rb') as f:
         probs_run1 = pickle.load(f)
-    with open(f'all_probs_0.3_h=True_gate={with_gate}_200_2.pkl', 'rb') as f:
+    with open(f'all_probs_0.3_h=True_gate={with_gate}_newnew5.pkl', 'rb') as f:
         probs_run2 = pickle.load(f)
 
     # Initialize the merged dictionary
@@ -515,7 +554,7 @@ def combine_data(with_gate):
         combined_dict[key] = list1 + list2  # Append lists from both dictionaries
 
     # Resulting merged_dict will contain keys with 800 items in each list
-    with open(f'all_probs_0.3_h=True_gate={with_gate}_combined_1400.pkl', 'wb') as f:
+    with open(f'all_probs_0.3_h=True_gate={with_gate}_newnew_all.pkl', 'wb') as f:
         pickle.dump(combined_dict, f)
     return combined_dict
 
